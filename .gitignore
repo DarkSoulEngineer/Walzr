@@ -1,0 +1,9 @@
+/target
+test.png
+*.png
+*.jpg
+*.jpeg
+*.gif
+book/
+# Nix
+result

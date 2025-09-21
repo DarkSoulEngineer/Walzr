@@ -1,0 +1,339 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PrettyConfig",
+  "description": "This is mainly to generate a pretty and accurate config JSON SCHEMA",
+  "type": "object",
+  "properties": {
+    "alpha": {
+      "description": "Optional alpha value",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint8",
+      "maximum": 255,
+      "minimum": 0
+    },
+    "backend": {
+      "description": "Which backend to use, see backends.rs",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Backend"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "check_contrast": {
+      "description": "This flags ensures good contrast between images, by doing some w3m calculations.\nHowever it isn't required and should only be turn on when you notice bad contrast between many images.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "color_space": {
+      "description": "Which colorspace to use, see colorspaces.rs",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ColorSpace"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "env_vars": {
+      "description": "Enables the use of enviromental variables in the targets template paths",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "fallback_generator": {
+      "description": "How to 'generate' colors when there aren't enough colors to create the `palette`.\nThis appears as \"Artificially generating colors..\" in cli",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FallbackGenerator"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "palette": {
+      "description": "Which palette to use, see palettes.rs",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Palette"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "saturation": {
+      "description": "Maybe the user requires more vivid colors",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint8",
+      "maximum": 255,
+      "minimum": 0
+    },
+    "templates": {
+      "description": "The [templates] header, here you can define multiple templates",
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": {
+        "$ref": "#/$defs/Fields"
+      }
+    },
+    "threshold": {
+      "description": "What threshold to use to differentiate colors, if not defined, wallust automatically looks\nfor the best fit",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint8",
+      "default": null,
+      "maximum": 255,
+      "minimum": 0
+    }
+  },
+  "$defs": {
+    "Backend": {
+      "description": "This indicates what 'parser' method to use, defined in the config file. Corresponds to the\nmodules inside this module",
+      "oneOf": [
+        {
+          "description": "Read and return the whole image pixels (more precision, slower)",
+          "type": "string",
+          "const": "full"
+        },
+        {
+          "description": "Resizes the image before parsing, mantaining it's aspect ratio",
+          "type": "string",
+          "const": "resized"
+        },
+        {
+          "description": "Uses image magick `convert` to generate the colors, like pywal",
+          "type": "string",
+          "const": "wal"
+        },
+        {
+          "description": "Faster algo hardcoded to 512x512 (no ratio respected)",
+          "type": "string",
+          "const": "thumb"
+        },
+        {
+          "description": "A much faster resize algo that uses SIMD. For some reason it fails on some images where\n`resized` doesn't, for this reason it doesn't *replace* but rather it's a new option.",
+          "type": "string",
+          "const": "fastresize"
+        },
+        {
+          "description": "Kmeans is an algo that divides and picks pixels all around the image, giving a more\ndiverse look.",
+          "type": "string",
+          "const": "kmeans"
+        }
+      ]
+    },
+    "ColorSpace": {
+      "description": "Corresponds to the modules inside this module and `color_space` parameter in the config file.",
+      "oneOf": [
+        {
+          "description": "Uses Cie L*a*b color space",
+          "type": "string",
+          "const": "lab"
+        },
+        {
+          "description": "Variant of `lab` that mixes the colors gathered, if not enough colors it fallbacks to usual\nlab (not recommended in small images)",
+          "type": "string",
+          "const": "labmixed"
+        },
+        {
+          "description": "CIE Lch, you can understand this color space like LAB but with chrome and hue added.\nCould help when sorting.",
+          "type": "string",
+          "const": "lch"
+        },
+        {
+          "description": "CIE Lch variant that mixed on every similar color.",
+          "type": "string",
+          "const": "lchmixed"
+        },
+        {
+          "description": "Variant of Lch which preserves 8 colors: black, red, green, yellow, blue, magenta, cyan and gray.\nThis works best with 'darkansi' palette, allowing a constant color order.",
+          "type": "string",
+          "const": "lchansi"
+        }
+      ]
+    },
+    "FallbackGenerator": {
+      "description": "The FallbackGenerator are methods only activated when the colors aren't sufficient for creating\na scheme palette, so these methods make variants of the already gathered colros to create a\nscheme.",
+      "oneOf": [
+        {
+          "description": "uses [`interpolate`]",
+          "type": "string",
+          "const": "interpolate"
+        },
+        {
+          "description": "uses [`complementary`]",
+          "type": "string",
+          "const": "complementary"
+        }
+      ]
+    },
+    "Fields": {
+      "description": "An entry within the config file, toml table\nref: <https://toml.io/en/v1.0.0#array-of-tables>",
+      "type": "object",
+      "properties": {
+        "max_depth": {
+          "description": "If 'src' is a directory, 'dst' SHOULD also be one.\nThis flag allows for 'src', when a dir, to be templated recursively\nIf 'src' is a file, this has no effect.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "pywal": {
+          "description": "Allows pywal template spec compatibility (disabled by default)",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "target": {
+          "description": "Where to write the template",
+          "type": "string"
+        },
+        "template": {
+          "description": "A file inside `~/.config/wallust/`, which is used for templating",
+          "type": "string"
+        }
+      },
+      "required": [
+        "template",
+        "target"
+      ]
+    },
+    "Palette": {
+      "description": "Corresponds to the modules inside this module and `palette` parameter in the config file.",
+      "oneOf": [
+        {
+          "description": "8 dark colors, dark background and light contrast",
+          "type": "string",
+          "const": "dark"
+        },
+        {
+          "description": "Same as `dark` but uses the 16 colors trick",
+          "type": "string",
+          "const": "dark16"
+        },
+        {
+          "description": "This is a `dark` variant that changes all colors to it's complementary counterpart, giving\nthe feeling of a 'new palette' but that still makes sense with the image provided.",
+          "type": "string",
+          "const": "darkcomp"
+        },
+        {
+          "description": "16 variation of the dark complementary variant",
+          "type": "string",
+          "const": "darkcomp16"
+        },
+        {
+          "description": "This is not a 'dark' variant, is a new palette that is meant to work with `lchansi`\ncolorspace, which will maintain 'tty' like color order and only adjusting the colors\nacording to the theme. A possible solution for LS_COLORS and the like. Should workout with\nother colorspace, but the result may not be optimal.",
+          "type": "string",
+          "const": "ansidark"
+        },
+        {
+          "description": "The ansidark palette with 16 color variation.",
+          "type": "string",
+          "const": "ansidark16"
+        },
+        {
+          "description": "Same as `dark` with hard hue colors",
+          "type": "string",
+          "const": "harddark"
+        },
+        {
+          "description": "Harddark with 16 color variation",
+          "type": "string",
+          "const": "harddark16"
+        },
+        {
+          "description": "complementary colors variation of harddark scheme",
+          "type": "string",
+          "const": "harddarkcomp"
+        },
+        {
+          "description": "complementary colors variation of harddark scheme",
+          "type": "string",
+          "const": "harddarkcomp16"
+        },
+        {
+          "description": "Light bg, dark fg",
+          "type": "string",
+          "const": "light"
+        },
+        {
+          "description": "Same as `light` but uses the 16 color trick",
+          "type": "string",
+          "const": "light16"
+        },
+        {
+          "description": "complementary colors variation of light",
+          "type": "string",
+          "const": "lightcomp"
+        },
+        {
+          "description": "complementary colors variation of light with the 16 color variation",
+          "type": "string",
+          "const": "lightcomp16"
+        },
+        {
+          "description": "Variant of softlight, uses the lightest colors and a dark background (could be\ninterpreted as `dark` inversed)",
+          "type": "string",
+          "const": "softdark"
+        },
+        {
+          "description": "softdark with 16 color variation",
+          "type": "string",
+          "const": "softdark16"
+        },
+        {
+          "description": "complementary variation for softdark",
+          "type": "string",
+          "const": "softdarkcomp"
+        },
+        {
+          "description": "complementary variation for softdark with the 16 color variation",
+          "type": "string",
+          "const": "softdarkcomp16"
+        },
+        {
+          "description": "Light with soft pastel colors, counterpart of `harddark`",
+          "type": "string",
+          "const": "softlight"
+        },
+        {
+          "description": "softlight with 16 color variation",
+          "type": "string",
+          "const": "softlight16"
+        },
+        {
+          "description": "softlight with complementary colors",
+          "type": "string",
+          "const": "softlightcomp"
+        },
+        {
+          "description": "softlight with complementary colors with 16 colors",
+          "type": "string",
+          "const": "softlightcomp16"
+        }
+      ]
+    }
+  }
+}
