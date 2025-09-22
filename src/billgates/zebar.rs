@@ -6,11 +6,15 @@ use wallust::colors::{Colors, Myrgb};
 /// Apply a Colors struct directly to CSS variables in styles.css
 pub fn apply_zebar_colors(colors: &Colors) -> Result<(), Box<dyn std::error::Error>> {
     let css_path = dirs::home_dir()
-        .map(|home| home.join(r"AppData\Roaming\zebar\downloads\echosonusharma.neon@1.0.1\styles.css"))
+        // C:\Users\<username>\.glzr\zebar\zebar_neon_theme
+        .map(|home| home.join(r".glzr\zebar\zebar_neon_theme\styles.css")) // TODO: zebar_neon_theme modify this to search in settings.json for the active theme 
         .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Home directory not found"))?;
 
     if !css_path.exists() {
-        return Err(Box::new(io::Error::new(io::ErrorKind::NotFound, format!("CSS file not found: {}", css_path.display()))));
+        return Err(Box::new(io::Error::new(
+            io::ErrorKind::NotFound,
+            format!("CSS file not found: {}", css_path.display()),
+        )));
     }
 
     // Backup CSS
@@ -18,7 +22,7 @@ pub fn apply_zebar_colors(colors: &Colors) -> Result<(), Box<dyn std::error::Err
     fs::copy(&css_path, &backup_path)?;
     println!("[I] Backup created: {}", backup_path.display());
 
-    // Map Colors -> (Myrgb, CSS variable)
+    // Map Colors -> (Myrgb, CSS variable) // TODO: Make colors more appealing
     let theme_colors: Vec<(Myrgb, &str)> = vec![
         (colors.color5, "color-primary"),
         (colors.color5, "color-primary-light"),
@@ -35,7 +39,6 @@ pub fn apply_zebar_colors(colors: &Colors) -> Result<(), Box<dyn std::error::Err
         (colors.color5, "color-battery-full"),
         (colors.color5, "color-battery-full-glow"),
     ];
-
 
     // Convert Myrgb -> "r g b"
     let updates: Vec<(&str, String)> = theme_colors
